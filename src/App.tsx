@@ -526,7 +526,7 @@ export default function App() {
                 key={item}
                 onClick={() => {
                   setActiveTab(item);
-                   if (item === "AI Builder") {
+                  if (item === "AI Builder") {
                     setCurrentView("docs");
                   } else if (item === "Dashboard") {
                     setCurrentView("dashboard");
@@ -536,7 +536,6 @@ export default function App() {
                 }}
                 className={`font-label-caps text-[12px] transition-all border-b pb-0.5 ${
                   currentView === item.toLowerCase() ||
-               
                   (item === "Docs" && currentView === "docs") ||
                   (item === "Dashboard" && currentView === "dashboard")
                     ? "text-brand-green border-brand-green font-semibold"
@@ -758,10 +757,10 @@ export default function App() {
               className="w-full flex flex-col"
             >
               {/* Hero Section */}
-              <section className="min-h-[85vh] flex items-center pt-8 pb-16 px-6 max-w-7xl mx-auto overflow-hidden">
+              <section className="min-h-fit sm:min-h-[85vh] flex items-center pt-8 pb-16 px-6 max-w-7xl mx-auto overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
                   {/* Hero Copy */}
-                  <div className="flex flex-col text-left">
+                  <div className="flex flex-col text-left gap-4">
                     <span className="font-label-caps text-brand-green mb-4 tracking-widest block bg-brand-green-bg/20 self-start px-2.5 py-1 rounded-full text-[10px]">
                       PROTOCOL V4.14 IS LIVE
                     </span>
@@ -794,7 +793,7 @@ export default function App() {
                         )}
                       </button>
                     </div> */}
-                    <h1 className="font-display-lg text-brand-dark tracking-tighter leading-[1.08] mb-6">
+                    <h1 className="font-headline-lg-mobile sm:font-display-lg text-brand-dark tracking-tighter leading-[1.08] mb-6">
                       Decentralized Compute
                       <span className="text-brand-green-light block italic font-medium mt-1">
                         & Routing Network{" "}
@@ -819,8 +818,8 @@ export default function App() {
                   </div>
 
                   {/* Hero Visual Glassmorphic Dashboard */}
-                  <div className="relative h-[550px] lg:h-[600px] flex items-center justify-center lg:justify-end">
-                    <div className="w-full glass rounded-xl p-6 relative shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-500 max-w-md border border-outline-variant/30">
+                  <div className="relative h-[420px] sm:h-[520px] lg:h-[600px] flex items-center justify-center lg:justify-end">
+                    <div className="w-full glass rounded-xl p-6 relative shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-500 max-w-full sm:max-w-md border border-outline-variant/30">
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-secondary-fixed via-secondary to-on-secondary-fixed-variant"></div>
 
                       <div className="flex justify-between items-center mb-6">
@@ -1874,7 +1873,6 @@ export default function App() {
             </motion.div>
           )}
 
-
           {currentView === "docs" && (
             <motion.div
               key="docs-view"
@@ -1884,10 +1882,7 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.4 }}
             >
-              <DocsPage
-               
-                onStartEarning={handleStartNodeConnection}
-              />
+              <DocsPage onStartEarning={handleStartNodeConnection} />
             </motion.div>
           )}
 
