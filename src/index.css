@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-display: var(--font-sans);
+
+  --color-brand-green: #000000;
+  --color-brand-green-light: #1f1f1f;
+  --color-brand-green-bg: #f6ede4;
+  --color-brand-bg: #ffffff;
+  --color-brand-dark: #4a2c1a;
+  --color-brand-gray: #5f4f44;
+  --color-brand-light-beige: #ded1c5;
+  --color-brand-cream: #faf4ee;
+
+  --animate-ticker-scroll: ticker-scroll 40s linear infinite;
+  --animate-float: float-anim 8s ease-in-out infinite;
+  --animate-soft-pulse: softPulse-anim 3s ease-in-out infinite;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes float-anim {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes softPulse-anim {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 0px rgba(16, 83, 64, 0));
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 12px rgba(16, 83, 64, 0.25));
+  }
+}
+
+@utility font-display-lg {
+  font-family: var(--font-display);
+  font-size: 72px;
+  line-height: 80px;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+@utility font-display-md {
+  font-family: var(--font-display);
+  font-size: 56px;
+  line-height: 64px;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+@utility font-headline-lg {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 400;
+}
+
+@utility font-headline-lg-mobile {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 400;
+}
+
+@utility font-headline-md {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+}
+
+@utility font-body-lg {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+@utility font-body-md {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+
+@utility font-body-sm {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+@utility font-label-caps {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--color-brand-dark);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(169, 169, 169, 0.15);
+  box-shadow: 0 20px 40px rgba(17, 17, 17, 0.04);
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Aetheris Protocol",
+  "description": "Institutional-grade routing for underutilized compute, bandwidth, and API capacity. Simple deployment, sovereign rewards. Built on Aetheris.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
