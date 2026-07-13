@@ -89,6 +89,13 @@ export default function DashboardPage({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
+  const ETH_USD_RATE = 1700;
+  const DAILY_TARGET_USD = 3;
+  const TASK_DURATION_MINUTES = 5;
+  const TASKS_PER_DAY = (24 * 60) / TASK_DURATION_MINUTES;
+  const REWARD_PER_TASK_ETH = DAILY_TARGET_USD / ETH_USD_RATE / TASKS_PER_DAY;
+  const REWARD_PER_TASK_USD = REWARD_PER_TASK_ETH * ETH_USD_RATE;
+
   // Keep track of active terminal session stats
   const activeSessionRef = useRef({
     jobsCount: 0,
@@ -438,14 +445,17 @@ export default function DashboardPage({
 
     // Start generating jobs after initial setup logs (approx 3000ms)
     setTimeout(() => {
-      activeIntervalRef.current = setInterval(() => {
-        runJobCycle(stepCounterRef.current);
-        stepCounterRef.current++;
-      }, 1000 * 6);
+      activeIntervalRef.current = setInterval(
+        () => {
+          runJobCycle(stepCounterRef.current);
+          stepCounterRef.current++;
+        },
+        1000 * 60 * 10,
+      );
     }, 3200);
   };
 
-  // Predefined job cycle logs to match the prompt list and then continue rewarding 0.00001 ETH per task.
+  // Predefined job cycle logs tuned to hit a $3/day target using 5-minute tasks at $1700/ETH.
   const runJobCycle = (stepIndex: number) => {
     if (stepIndex === 0) {
       appendLog("  [api_health] Processing 20f8019c...", "regular");
@@ -456,24 +466,27 @@ export default function DashboardPage({
         "  Job 8af41f13 failed: Cannot convert undefined or null to object",
         "error",
       );
-      appendLog("  [dns_lookup] 19c73a30 done (136ms) +0.00001 ETH", "success");
+      appendLog(
+        `  [dns_lookup] 19c73a30 done (136ms) +${REWARD_PER_TASK_ETH.toFixed(8)} ETH`,
+        "success",
+      );
 
-      incrementEarningsAndJobs(0.000001, 1);
+      incrementEarningsAndJobs(REWARD_PER_TASK_ETH, 1);
 
       appendLog(
-        `  Done | Earned: 0.00001 ETH | Total: ${activeSessionRef.current.earnings.toFixed(5)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
+        `  Done | Earned: ${REWARD_PER_TASK_ETH.toFixed(8)} ETH | Total: ${activeSessionRef.current.earnings.toFixed(8)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
         "info",
       );
     } else if (stepIndex === 2) {
       appendLog(
-        "  [api_health] 20f8019c done (1005ms) +0.00001 ETH",
+        `  [api_health] 20f8019c done (1005ms) +${REWARD_PER_TASK_ETH.toFixed(8)} ETH`,
         "success",
       );
 
-      incrementEarningsAndJobs(0.00001, 1);
+      incrementEarningsAndJobs(REWARD_PER_TASK_ETH, 1);
 
       appendLog(
-        `  Done | Earned: 0.00001 ETH | Total: ${activeSessionRef.current.earnings.toFixed(5)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
+        `  Done | Earned: ${REWARD_PER_TASK_ETH.toFixed(8)} ETH | Total: ${activeSessionRef.current.earnings.toFixed(8)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
         "info",
       );
     } else if (stepIndex === 3) {
@@ -485,22 +498,25 @@ export default function DashboardPage({
         "  Job 6bd831de failed: Cannot convert undefined or null to object",
         "error",
       );
-      appendLog("  [dns_lookup] 97d1fa5f done (127ms) +0.00001 ETH", "success");
+      appendLog(
+        `  [dns_lookup] 97d1fa5f done (127ms) +${REWARD_PER_TASK_ETH.toFixed(8)} ETH`,
+        "success",
+      );
 
-      incrementEarningsAndJobs(0.00001, 1);
+      incrementEarningsAndJobs(REWARD_PER_TASK_ETH, 1);
 
       appendLog(
-        `  Done | Earned: 0.00001 ETH | Total: ${activeSessionRef.current.earnings.toFixed(5)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
+        `  Done | Earned: ${REWARD_PER_TASK_ETH.toFixed(8)} ETH | Total: ${activeSessionRef.current.earnings.toFixed(8)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
         "info",
       );
     } else {
       appendLog(
-        `  [heartbeat] Task batch ${stepIndex - 2} complete (1000ms) +0.00001 ETH`,
+        `  [heartbeat] Task batch ${stepIndex - 2} complete (1000ms) +${REWARD_PER_TASK_ETH.toFixed(8)} ETH`,
         "success",
       );
-      incrementEarningsAndJobs(0.00001, 1);
+      incrementEarningsAndJobs(REWARD_PER_TASK_ETH, 1);
       appendLog(
-        `  Done | Earned: 0.00001 ETH | Total: ${activeSessionRef.current.earnings.toFixed(5)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
+        `  Done | Earned: ${REWARD_PER_TASK_ETH.toFixed(8)} ETH | Total: ${activeSessionRef.current.earnings.toFixed(8)} ETH | Jobs: ${activeSessionRef.current.jobsCount}`,
         "info",
       );
     }
@@ -688,7 +704,7 @@ export default function DashboardPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipientAddress: walletAddress,
-          amount: "0.0000001",
+          amount: availableToWithdraw,
         }),
       });
 
@@ -1132,7 +1148,7 @@ export default function DashboardPage({
                         Observe jobs process live. Every completed job
                         automatically awards{" "}
                         <strong className="text-white font-mono">
-                          +$0.0002
+                          +${REWARD_PER_TASK_USD.toFixed(4)}
                         </strong>{" "}
                         which ticks upward in both the terminal output and
                         dashboard.
