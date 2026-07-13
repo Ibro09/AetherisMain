@@ -700,19 +700,25 @@ export default function DashboardPage({
         );
       }
 
+      const txHash = data.signature || data.hash || data.txHash || null;
+      const explorerUrl = data.explorerUrl || data.explorer || null;
+      const solAmount = Number(data.solAmount ?? data.amount ?? 0);
+
       // Success! Update local stats
       const originalAmount = availableToWithdraw;
       setWithdrawnTotal((prev) => prev + originalAmount);
       setAvailableToWithdraw(0.0);
       setWithdrawSuccess(true);
-      setWithdrawTxSignature(data.signature);
-      setWithdrawExplorerUrl(data.explorerUrl);
+      setWithdrawTxSignature(txHash);
+      setWithdrawExplorerUrl(explorerUrl);
 
       appendLog(
-        `[Withdrawal Succeeded] TX: ${data.signature.slice(0, 8)}... (Dispatched payout of ${data.solAmount.toFixed(6)} SOL successfully)`,
+        `[Withdrawal Succeeded] TX: ${txHash ? `${txHash.slice(0, 8)}...` : "pending"} (Dispatched payout of ${solAmount.toFixed(6)} SOL successfully)`,
         "success",
       );
-      appendLog(`  Explorer Link: ${data.explorerUrl}`, "success");
+      if (explorerUrl) {
+        appendLog(`  Explorer Link: ${explorerUrl}`, "success");
+      }
 
       // Refresh server-side balance
       fetchServerSolConfig();

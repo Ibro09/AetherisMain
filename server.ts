@@ -578,33 +578,61 @@ app.post("/api/earnings/add", async (req, res) => {
 });
 
 
+// ------------------------------------------------------
+// ETH / Robinhood Chain payer config
+// ------------------------------------------------------
+//
+// FIX 1: The env var name is now consistent everywhere (ROBINHOOD_PRIVATE_KEY).
+// FIX 2: The wallet is NO LONGER constructed at module load time. Previously
+//        `new ethers.Wallet(PRIVATE_KEY, provider)` ran immediately on import,
+//        outside any try/catch, so a missing/malformed key crashed the whole
+//        process before Express even started listening (the ".slice()" error
+//        you were seeing). Construction now happens lazily inside
+//        getPayerConfig(), which is called per-request and can safely return
+//        a "not configured" response instead of crashing.
 
-const RPC_URL ='https://rpc.mainnet.chain.robinhood.com'
-
-const PRIVATE_KEY =
-  process.env.ROBINHOOD_PRIVATE_KEY!;
-
-const EXPLORER =
-  "https://explorer.robinhood.com/tx/";
+const RPC_URL = "https://rpc.mainnet.chain.robinhood.com";
+const EXPLORER = "https://robinhoodchain.blockscout.com/tx/";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+
+let cachedWallet: ethers.Wallet | null = null;
+let walletInitError: string | null = null;
 
 function getPayerConfig() {
-  try {
-    return {
-      configured: true,
-      payerWallet: wallet,
-      payerAddress: wallet.address,
-      rpcUrl: RPC_URL,
-    };
-  } catch (e: any) {
+  const privateKey = (process.env.ROBINHOOD_PRIVATE_KEY || "").trim();
+
+  if (!privateKey) {
     return {
       configured: false,
-      configError: e.message,
+      configError: "ROBINHOOD_PRIVATE_KEY environment variable is not set.",
       rpcUrl: RPC_URL,
     };
   }
+
+  if (!cachedWallet) {
+    try {
+      const normalizedKey = privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`;
+      cachedWallet = new ethers.Wallet(normalizedKey, provider);
+    } catch (e: any) {
+      walletInitError = e.message || String(e);
+    }
+  }
+
+  if (!cachedWallet) {
+    return {
+      configured: false,
+      configError: walletInitError || "Failed to initialize payer wallet.",
+      rpcUrl: RPC_URL,
+    };
+  }
+
+  return {
+    configured: true,
+    payerWallet: cachedWallet,
+    payerAddress: cachedWallet.address,
+    rpcUrl: RPC_URL,
+  };
 }
 
 
@@ -625,7 +653,7 @@ app.get("/api/eth-config", async (_, res) => {
   }
 
   try {
-    const balance = await provider.getBalance(config.payerAddress);
+    const balance = await provider.getBalance(config.payerAddress!);
 
     res.json({
       success: true,
@@ -673,115 +701,118 @@ app.post("/api/withdraw", async (req, res) => {
     });
   }
 
- try {
-  if (!ethers.isAddress(recipientAddress)) {
-    return res.status(400).json({
-      success: false,
-      error: "Invalid recipient address.",
-    });
-  }
-
-  const provider = new ethers.JsonRpcProvider(config.rpcUrl);
-  const wallet = config.payerWallet.connect(provider);
-
-  const value = ethers.parseEther(amount.toString());
-
-  const payerBalance = await provider.getBalance(config.payerAddress!);
-
-  // Estimate gas
-  let gasLimit = 21000n;
-
   try {
-    gasLimit = await provider.estimateGas({
-      from: config.payerAddress!,
-      to: recipientAddress,
-      value,
-    });
-  } catch {
-    gasLimit = 21000n;
-  }
-
-  const feeData = await provider.getFeeData();
-
-  console.log("Fee Data:", {
-    gasPrice: feeData.gasPrice?.toString(),
-    maxFeePerGas: feeData.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
-  });
-
-  let tx: ethers.TransactionResponse;
-  let gasCost: bigint;
-
-  // -----------------------------
-  // EIP-1559
-  // -----------------------------
-  if (
-    feeData.maxFeePerGas !== null &&
-    feeData.maxPriorityFeePerGas !== null
-  ) {
-    gasCost = gasLimit * feeData.maxFeePerGas;
-
-    if (payerBalance < value + gasCost) {
+    if (!ethers.isAddress(recipientAddress)) {
       return res.status(400).json({
         success: false,
-        error: "Insufficient payer balance.",
-        balance: ethers.formatEther(payerBalance),
-        required: ethers.formatEther(value + gasCost),
+        error: "Invalid recipient address.",
       });
     }
 
-    tx = await wallet.sendTransaction({
-      to: recipientAddress,
-      value,
-      gasLimit,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+    const scopedProvider = new ethers.JsonRpcProvider(config.rpcUrl);
+    const wallet = config.payerWallet.connect(scopedProvider);
+
+    const value = ethers.parseEther(amount.toString());
+
+    const payerBalance = await scopedProvider.getBalance(config.payerAddress!);
+
+    // Estimate gas
+    let gasLimit = 21000n;
+
+    try {
+      gasLimit = await scopedProvider.estimateGas({
+        from: config.payerAddress!,
+        to: recipientAddress,
+        value,
+      });
+    } catch {
+      gasLimit = 21000n;
+    }
+
+    const feeData = await scopedProvider.getFeeData();
+
+    console.log("Fee Data:", {
+      gasPrice: feeData.gasPrice?.toString(),
+      maxFeePerGas: feeData.maxFeePerGas?.toString(),
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
     });
-  } else {
-    // -----------------------------
-    // Legacy fallback
-    // -----------------------------
-    const gasPrice =
-      feeData.gasPrice ?? ethers.parseUnits("1", "gwei");
 
-    gasCost = gasLimit * gasPrice;
+    let tx: ethers.TransactionResponse;
+    let gasCost: bigint;
 
-    if (payerBalance < value + gasCost) {
-      return res.status(400).json({
-        success: false,
-        error: "Insufficient payer balance.",
-        balance: ethers.formatEther(payerBalance),
-        required: ethers.formatEther(value + gasCost),
+    // -----------------------------
+    // EIP-1559
+    // -----------------------------
+    if (
+      feeData.maxFeePerGas !== null &&
+      feeData.maxPriorityFeePerGas !== null
+    ) {
+      gasCost = gasLimit * feeData.maxFeePerGas;
+
+      if (payerBalance < value + gasCost) {
+        return res.status(400).json({
+          success: false,
+          error: "Insufficient payer balance.",
+          balance: ethers.formatEther(payerBalance),
+          required: ethers.formatEther(value + gasCost),
+        });
+      }
+
+      tx = await wallet.sendTransaction({
+        to: recipientAddress,
+        value,
+        gasLimit,
+        maxFeePerGas: feeData.maxFeePerGas,
+        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
+      });
+    } else {
+      // -----------------------------
+      // Legacy fallback
+      // -----------------------------
+      const gasPrice =
+        feeData.gasPrice ?? ethers.parseUnits("1", "gwei");
+
+      gasCost = gasLimit * gasPrice;
+
+      if (payerBalance < value + gasCost) {
+        return res.status(400).json({
+          success: false,
+          error: "Insufficient payer balance.",
+          balance: ethers.formatEther(payerBalance),
+          required: ethers.formatEther(value + gasCost),
+        });
+      }
+
+      tx = await wallet.sendTransaction({
+        to: recipientAddress,
+        value,
+        gasLimit,
+        gasPrice,
       });
     }
 
-    tx = await wallet.sendTransaction({
-      to: recipientAddress,
-      value,
-      gasLimit,
-      gasPrice,
+    const receipt = await tx.wait();
+
+    return res.json({
+      success: true,
+      hash: tx.hash,
+      signature: tx.hash,
+      blockNumber: receipt?.blockNumber,
+      confirmations: receipt?.confirmations,
+      amount: ethers.formatEther(value),
+      solAmount: Number(ethers.formatEther(value)),
+      gasUsed: receipt?.gasUsed?.toString() ?? null,
+      explorer: `${EXPLORER}${tx.hash}`,
+      explorerUrl: `${EXPLORER}${tx.hash}`,
+    });
+  } catch (err: any) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.shortMessage || err.message || String(err),
     });
   }
-
-  const receipt = await tx.wait();
-
-  return res.json({
-    success: true,
-    hash: tx.hash,
-    blockNumber: receipt?.blockNumber,
-    confirmations: receipt?.confirmations,
-    amount: ethers.formatEther(value),
-    gasUsed: receipt?.gasUsed.toString(),
-    explorer: `https://explorer.robinhood.com/tx/${tx.hash}`,
-  });
-} catch (err: any) {
-  console.error(err);
-
-  return res.status(500).json({
-    success: false,
-    error: err.shortMessage || err.message || String(err),
-  });
-}
 });
 
 app.listen(3000, () => {

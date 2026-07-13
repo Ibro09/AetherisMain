@@ -591,11 +591,14 @@ app.post("/api/withdraw", async (req, res) => {
     return res.json({
       success: true,
       hash: tx.hash,
+      signature: tx.hash,
       blockNumber: receipt?.blockNumber,
       confirmations: receipt?.confirmations,
       amount: ethers.formatEther(value),
-      gasUsed: receipt?.gasUsed.toString(),
+      solAmount: Number(ethers.formatEther(value)),
+      gasUsed: receipt?.gasUsed?.toString() ?? null,
       explorer: `https://explorer.robinhood.com/tx/${tx.hash}`,
+      explorerUrl: `https://explorer.robinhood.com/tx/${tx.hash}`,
     });
   } catch (err: any) {
     console.error(err);
