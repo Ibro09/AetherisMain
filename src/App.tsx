@@ -218,7 +218,7 @@ export default function App() {
 
   // Token CA copy state
   const [tokenCopied, setTokenCopied] = useState<boolean>(false);
-  const TOKEN_CA = "FdfnFzFzCArFBVW9wqPd5sesdrK7uXTzQkw4vRwDpump";
+  const TOKEN_CA = "0x38d1e988f976ca9ed15843258be9c24ca13a8888";
 
   const copyTokenToClipboard = () => {
     navigator.clipboard.writeText(TOKEN_CA);
@@ -764,11 +764,11 @@ export default function App() {
                     <span className="font-label-caps text-brand-green mb-4 tracking-widest block bg-brand-green-bg/20 self-start px-2.5 py-1 rounded-full text-[10px]">
                       PROTOCOL V4.14 IS LIVE
                     </span>
-                    {/* <div className="flex items-center gap-2 mb-6">
+                    <div className="flex items-center gap-2 mb-6">
                       <span className="inline-block font-label-caps text-white bg-gradient-to-r from-brand-green to-brand-green-light px-3 py-1.5 rounded-full text-[11px] shadow-md border border-brand-green/40 tracking-wider">
                         Token:{" "}
                         <span className=" tracking-tight">
-                          FdfnFzFzCArFBVW9wqPd5sesdrK7uXTzQkw4vRwDpump
+                    ${TOKEN_CA}
                         </span>
                       </span>
                       <button
@@ -792,7 +792,7 @@ export default function App() {
                           </>
                         )}
                       </button>
-                    </div> */}
+                    </div>
                     <h1 className="font-headline-lg-mobile sm:font-display-lg text-brand-dark tracking-tighter leading-[1.08] mb-6">
                       Decentralized Compute
                       <span className="text-brand-green-light block italic font-medium mt-1">
@@ -2320,7 +2320,7 @@ export default function App() {
             <ul className="space-y-3 font-body-sm text-[13px] text-brand-gray">
               <li>
                 <a
-                  href="https://x.com/useaetheris2026"
+                  href="https://x.com/aetherisaitek?s=21"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-brand-green transition-all hover:pl-1 block text-left"
@@ -2329,7 +2329,7 @@ export default function App() {
                 </a>
               </li>
 
-              <li>
+              {/* <li>
                 <a
                   href="https://t.me/earnaetheris"
                   target="_blank"
@@ -2338,7 +2338,7 @@ export default function App() {
                 >
                   Telegram
                 </a>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>
